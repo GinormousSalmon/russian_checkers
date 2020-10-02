@@ -1,5 +1,3 @@
-package com.example
-
 import tornadofx.*
 
 fun main() {

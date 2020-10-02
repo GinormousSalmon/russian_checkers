@@ -1,5 +1,3 @@
-package com.example
-
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
 import tornadofx.Stylesheet

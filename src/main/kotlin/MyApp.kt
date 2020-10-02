@@ -1,6 +1,4 @@
-package com.example
-
-import com.example.view.MainView
+import view.MainView
 import javafx.stage.Stage
 import tornadofx.*
 
