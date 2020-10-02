@@ -136,6 +136,7 @@ class MainView : View("rus checkers") {
                 desk[xMed][yMed] = 0
                 val temp = checkers.find { it.pos == Point(xMed, yMed) }
                 temp?.circle?.hide()
+                temp?.pos = Point(-10, -10)
                 temp?.circle?.onLeftClick { nothing() }
             }
             checkers[selectedCheckerN].circle.gridpaneConstraints { columnRowIndex(x, y) }
@@ -158,35 +159,86 @@ class MainView : View("rus checkers") {
         val y = pos.y
         clear()
         if (circle.fill == WHITE) {
-            if ((x > 0) and (y > 0))
-                if (desk[x - 1][y - 1] == 0)
-                    tiles[x - 1][y - 1].fill = Color.GREEN
-            if ((x < 7) and (y > 0))
-                if (desk[x + 1][y - 1] == 0)
-                    tiles[x + 1][y - 1].fill = Color.GREEN
-
-            if ((x > 1) and (y > 1))
-                if ((desk[x - 2][y - 2] == 0) and (desk[x - 1][y - 1] == 2))
-                    tiles[x - 2][y - 2].fill = Color.GREEN
-            if ((x < 6) and (y > 1))
-                if ((desk[x + 2][y - 2] == 0) and (desk[x + 1][y - 1] == 2))
-                    tiles[x + 2][y - 2].fill = Color.GREEN
-
+            if (!canOtherWhitesMove(pos)) {
+                var canAttack = false
+                if ((x > 1) and (y > 1))
+                    if ((desk[x - 2][y - 2] == 0) and (desk[x - 1][y - 1] == 2)) {
+                        tiles[x - 2][y - 2].fill = Color.GREEN
+                        canAttack = true
+                    }
+                if ((x < 6) and (y > 1))
+                    if ((desk[x + 2][y - 2] == 0) and (desk[x + 1][y - 1] == 2)) {
+                        tiles[x + 2][y - 2].fill = Color.GREEN
+                        canAttack = true
+                    }
+                if (!canAttack) {
+                    if ((x > 0) and (y > 0))
+                        if (desk[x - 1][y - 1] == 0)
+                            tiles[x - 1][y - 1].fill = Color.GREEN
+                    if ((x < 7) and (y > 0))
+                        if (desk[x + 1][y - 1] == 0)
+                            tiles[x + 1][y - 1].fill = Color.GREEN
+                }
+            }
         } else {
-            if ((x > 0) and (y < 7))
-                if (desk[x - 1][y + 1] == 0)
-                    tiles[x - 1][y + 1].fill = Color.GREEN
-            if ((x < 7) and (y < 7))
-                if (desk[x + 1][y + 1] == 0)
-                    tiles[x + 1][y + 1].fill = Color.GREEN
-
-            if ((x > 1) and (y < 6))
-                if ((desk[x - 2][y + 2] == 0) and (desk[x - 1][y + 1] == 1))
-                    tiles[x - 2][y + 2].fill = Color.GREEN
-            if ((x < 6) and (y < 6))
-                if ((desk[x + 2][y + 2] == 0) and (desk[x + 1][y + 1] == 1))
-                    tiles[x + 2][y + 2].fill = Color.GREEN
+            if (!canOtherBlacksMove(pos)) {
+                var canAttack = false
+                if ((x > 1) and (y < 6))
+                    if ((desk[x - 2][y + 2] == 0) and (desk[x - 1][y + 1] == 1)) {
+                        tiles[x - 2][y + 2].fill = Color.GREEN
+                        canAttack = true
+                    }
+                if ((x < 6) and (y < 6))
+                    if ((desk[x + 2][y + 2] == 0) and (desk[x + 1][y + 1] == 1)) {
+                        tiles[x + 2][y + 2].fill = Color.GREEN
+                        canAttack = true
+                    }
+                if (!canAttack) {
+                    if ((x > 0) and (y < 7))
+                        if (desk[x - 1][y + 1] == 0)
+                            tiles[x - 1][y + 1].fill = Color.GREEN
+                    if ((x < 7) and (y < 7))
+                        if (desk[x + 1][y + 1] == 0)
+                            tiles[x + 1][y + 1].fill = Color.GREEN
+                }
+            }
         }
+    }
+
+    private fun canOtherWhitesMove(pos: Point): Boolean {
+        for (checker in checkers) {
+            if (checker.color == WHITE) {
+                val x = checker.pos.x
+                val y = checker.pos.y
+                if ((pos != Point(x, y)) and (Point(x, y) != Point(-10, -10))) {
+                    if ((x > 1) and (y > 1))
+                        if ((desk[x - 2][y - 2] == 0) and (desk[x - 1][y - 1] == 2))
+                            return true
+                    if ((x < 6) and (y > 1))
+                        if ((desk[x + 2][y - 2] == 0) and (desk[x + 1][y - 1] == 2))
+                            return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun canOtherBlacksMove(pos: Point): Boolean {
+        for (checker in checkers) {
+            if (checker.color == BLACK) {
+                val x = checker.pos.x
+                val y = checker.pos.y
+                if ((pos != Point(x, y)) and (Point(x, y) != Point(-10, -10))) {
+                    if ((x > 1) and (y < 6))
+                        if ((desk[x - 2][y + 2] == 0) and (desk[x - 1][y + 1] == 1))
+                            return true
+                    if ((x < 6) and (y < 6))
+                        if ((desk[x + 2][y + 2] == 0) and (desk[x + 1][y + 1] == 1))
+                            return true
+                }
+            }
+        }
+        return false
     }
 
     private fun clear() {
