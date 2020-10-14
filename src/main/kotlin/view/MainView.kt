@@ -1,5 +1,6 @@
 package view
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import javafx.geometry.HPos
 import javafx.geometry.VPos
 import javafx.scene.control.Label
@@ -104,6 +105,13 @@ class MainView : View("rus checkers") {
     private fun tileClick(rectangle: Rectangle, newX: Int, newY: Int) {
         if (rectangle.fill == GREEN) {
             clear()
+            println("circle - " + desk[selectedX][selectedY].circle)
+            desk[selectedX][selectedY].circle?.gridpaneConstraints { columnRowIndex(newX, newY) }
+            desk[newX][newY].circle = desk[selectedX][selectedY].circle
+            desk[selectedX][selectedY].color = null
+            desk[newX][newY].color = turn
+
+            var changeTurn = true
             if (kotlin.math.abs(selectedX - newX) == 2) {
                 println("attack")
                 val xMed = (selectedX + newX) / 2
@@ -111,57 +119,61 @@ class MainView : View("rus checkers") {
                 desk[xMed][yMed].color = null
                 desk[xMed][yMed].circle?.hide()
                 desk[xMed][yMed].circle = null
+                println("newx $newX newy $newY")
+                changeTurn = !calcPossibleAttacks(newX, newY)
             }
 
-            println("selX selY newX newY: $selectedX $selectedY $newX $newY")
-            println("circle - " + desk[selectedX][selectedY].circle)
-            desk[selectedX][selectedY].circle?.gridpaneConstraints { columnRowIndex(newX, newY) }
-            desk[newX][newY].circle = desk[selectedX][selectedY].circle
-            desk[selectedX][selectedY].color = null
-            if (turn == WHITE) {
-                desk[newX][newY].color = WHITE
-                turn = BLACK
-                lbl.text = "Black turn"
-            } else {
-                desk[newX][newY].color = BLACK
-                turn = WHITE
-                lbl.text = "White turn"
+            if (changeTurn) {
+                if (!calcPossibleAttacks())
+                    calcPossibleMoves()
+                turn = turn.invert()
+                lbl.text = (if (turn == WHITE) "White" else "Black") + " turn"
             }
-            calcPossibleMoves()
         }
     }
 
-    private fun calcPossibleMoves() {
-        var canAttack = false
+    private fun calcPossibleAttacks(selectedX: Int = -1, selectedY: Int = -1): Boolean {
+        var canAnyAttack = false
+        if (selectedX != -1) {
+            println("fffuck")
+            return canAttack(selectedX, selectedY)
+        }
         for (x in 0..7)
             for (y in 0..7) {
-                val color = desk[x][y].color
-                if (color == turn) {
-                    desk[x][y].possibleMoves.clear()
-//                    desk[x][y].canAttack = false
-                    for (i in listOf(-2, 2))
-                        for (j in listOf(-2, 2))
-                            if (x + i in 0..7 && y + j in 0..7)
-                                if (desk[x + i][y + j].color == null && desk[x + i / 2][y + j / 2].color == color?.invert()) {
-                                    desk[x][y].possibleMoves.add(Pair(x + i, y + j))
-                                    canAttack = true
-                                }
+                if (desk[x][y].color == turn.invert()) {
+                    canAnyAttack = canAttack(x, y) || canAnyAttack
                 }
             }
-        if (!canAttack)
-            for (x in 0..7)
-                for (y in 0..7)
-                    if (desk[x][y].possibleMoves.isEmpty()) {
-                        val addition = if (desk[x][y].color == WHITE) -1 else 1
-                        if (y + addition in 0..7) {
-                            if (x <= 6)
-                                if (desk[x + 1][y + addition].color == null)
-                                    desk[x][y].possibleMoves.add(Pair(x + 1, y + addition))
-                            if (x >= 1)
-                                if (desk[x - 1][y + addition].color == null)
-                                    desk[x][y].possibleMoves.add(Pair(x - 1, y + addition))
-                        }
+        return canAnyAttack
+    }
+
+    private fun canAttack(x: Int, y: Int): Boolean {
+        var canAnyAttack = false
+        desk[x][y].possibleMoves.clear()
+        for (i in listOf(-2, 2))
+            for (j in listOf(-2, 2))
+                if (x + i in 0..7 && y + j in 0..7)
+                    if (desk[x + i][y + j].color == null && desk[x + i / 2][y + j / 2].color == desk[x][y].color?.invert()) {
+                        desk[x][y].possibleMoves.add(Pair(x + i, y + j))
+                        canAnyAttack = true
                     }
+        return canAnyAttack
+    }
+
+    private fun calcPossibleMoves() {
+        for (x in 0..7)
+            for (y in 0..7)
+                if (desk[x][y].possibleMoves.isEmpty()) {
+                    val addition = if (desk[x][y].color == WHITE) -1 else 1
+                    if (y + addition in 0..7) {
+                        if (x <= 6)
+                            if (desk[x + 1][y + addition].color == null)
+                                desk[x][y].possibleMoves.add(Pair(x + 1, y + addition))
+                        if (x >= 1)
+                            if (desk[x - 1][y + addition].color == null)
+                                desk[x][y].possibleMoves.add(Pair(x - 1, y + addition))
+                    }
+                }
     }
 
 
