@@ -145,10 +145,13 @@ class MainView : View("rus checkers") {
     }
 
     private fun calcPossibleAttacks(selectedX: Int = -1, selectedY: Int = -1): Boolean {
-        var canAnyAttack = false
+        for (x in 0..7)
+            for (y in 0..7)
+                desk[x][y].possibleMoves.clear()
         if (selectedX != -1) {
             return canAttack(selectedX, selectedY)
         }
+        var canAnyAttack = false
         for (x in 0..7)
             for (y in 0..7) {
                 if (desk[x][y].color == turn.invert()) {
@@ -160,7 +163,6 @@ class MainView : View("rus checkers") {
 
     private fun canAttack(x: Int, y: Int): Boolean {
         var canAnyAttack = false
-        desk[x][y].possibleMoves.clear()
         for (i in listOf(-2, 2))
             for (j in listOf(-2, 2))
                 if (x + i in 0..7 && y + j in 0..7)
