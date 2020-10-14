@@ -1,15 +1,19 @@
 package view
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import javafx.geometry.HPos
 import javafx.geometry.VPos
 import javafx.scene.control.Label
+import javafx.scene.effect.Effect
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.paint.Color.*
+import javafx.scene.paint.Paint
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Font
+import org.omg.CORBA.Object
 import tornadofx.*
 
 
@@ -22,9 +26,10 @@ class MainView : View("rus checkers") {
     private var turn = WHITE
 
     class Ch(
-        var circle: Circle? = null,
+        var image: ImageView? = null,
         var color: Color? = null,
-        val possibleMoves: MutableList<Pair<Int, Int>> = mutableListOf()
+        val possibleMoves: MutableList<Pair<Int, Int>> = mutableListOf(),
+        var isKing: Boolean = false
     )
 
     private val desk = mutableListOf<MutableList<Ch>>()
@@ -48,7 +53,7 @@ class MainView : View("rus checkers") {
                             widthProperty().bind(root.widthProperty().divide(8))
                             heightProperty().bind(root.widthProperty().divide(8))
                             gridpaneConstraints { columnRowIndex(i, j) }
-                            onLeftClick { tileClick(this, i, j) }
+                            onLeftClick { tileClick(this.fill, i, j) }
                         })
                 }
                 for (i in 0..7) {
@@ -57,14 +62,13 @@ class MainView : View("rus checkers") {
                         desk[i].add(Ch())
                 }
                 for (row in (0..2) + (5..7)) {
-                    val color = if (row < 3) BLACK else WHITE
+                    val color = if (row < 3) "black" else "white"
                     for (column in 0..7)
                         if ((row + column) % 2 == 1) {
-                            val c = circle {
-                                fill = color
-                                radiusProperty().bind(root.widthProperty().divide(radiusDivider))
-                                centerXProperty().bind(root.widthProperty().divide(40))
-                                centerYProperty().bind(root.widthProperty().divide(40))
+                            val imv = imageview {
+                                image = Image("file:src/main/resources/$color.png")
+                                fitHeightProperty().bind(root.widthProperty().divide(10))
+                                fitWidthProperty().bind(root.widthProperty().divide(10))
                                 gridpaneConstraints {
                                     columnRowIndex(column, row)
                                     hAlignment = HPos.CENTER
@@ -75,11 +79,8 @@ class MainView : View("rus checkers") {
                                     click(properties["gridpane-column"] as Int, properties["gridpane-row"] as Int)
                                 }
                             }
-                            desk[column][row].circle = c
-                            if (row < 3)
-                                desk[column][row].color = BLACK
-                            else
-                                desk[column][row].color = WHITE
+                            desk[column][row].image = imv
+                            desk[column][row].color = if (row < 3) BLACK else WHITE
                         }
                 }
             }
@@ -102,14 +103,25 @@ class MainView : View("rus checkers") {
     }
 
 
-    private fun tileClick(rectangle: Rectangle, newX: Int, newY: Int) {
-        if (rectangle.fill == GREEN) {
+    private fun tileClick(color: Paint, newX: Int, newY: Int) {
+        if (color == GREEN) {
             clear()
-            println("circle - " + desk[selectedX][selectedY].circle)
-            desk[selectedX][selectedY].circle?.gridpaneConstraints { columnRowIndex(newX, newY) }
-            desk[newX][newY].circle = desk[selectedX][selectedY].circle
-            desk[selectedX][selectedY].color = null
+//            println("circle - " + desk[selectedX][selectedY].circle)
+            desk[selectedX][selectedY].image?.gridpaneConstraints { columnRowIndex(newX, newY) }
+            desk[newX][newY].image = desk[selectedX][selectedY].image
             desk[newX][newY].color = turn
+
+            desk[selectedX][selectedY].color = null
+            desk[selectedX][selectedY].image = null
+
+            if (newY == 0 || newY == 7) {
+                desk[newX][newY].isKing = true
+                Image("file:src/main/resources/$color.png")
+                val col = if (desk[newX][newY].color == WHITE) "white" else "black"
+                desk[newX][newY].image?.image = Image("file:src/main/resources/${col}_king.png")
+            }
+
+//            desk[newX][newY].circle = imageview(Image("file:src/main/resources/bl.png"))
 
             var changeTurn = true
             if (kotlin.math.abs(selectedX - newX) == 2) {
@@ -117,8 +129,8 @@ class MainView : View("rus checkers") {
                 val xMed = (selectedX + newX) / 2
                 val yMed = (selectedY + newY) / 2
                 desk[xMed][yMed].color = null
-                desk[xMed][yMed].circle?.hide()
-                desk[xMed][yMed].circle = null
+                desk[xMed][yMed].image?.hide()
+                desk[xMed][yMed].image = null
                 println("newx $newX newy $newY")
                 changeTurn = !calcPossibleAttacks(newX, newY)
             }
@@ -135,7 +147,6 @@ class MainView : View("rus checkers") {
     private fun calcPossibleAttacks(selectedX: Int = -1, selectedY: Int = -1): Boolean {
         var canAnyAttack = false
         if (selectedX != -1) {
-            println("fffuck")
             return canAttack(selectedX, selectedY)
         }
         for (x in 0..7)
