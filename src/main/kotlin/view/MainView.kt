@@ -3,24 +3,20 @@ package view
 import javafx.geometry.HPos
 import javafx.geometry.VPos
 import javafx.scene.control.Label
-import javafx.scene.effect.Effect
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.paint.Color.*
 import javafx.scene.paint.Paint
-import javafx.scene.shape.Circle
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Font
-import org.omg.CORBA.Object
 import tornadofx.*
 
 
 class MainView : View("rus checkers") {
     override val root = VBox()
     private val fontSizeDivider = 15
-    private val radiusDivider = 22
     private val initialWidth = 600.0
     private lateinit var lbl: Label
     private var turn = WHITE
@@ -61,9 +57,9 @@ class MainView : View("rus checkers") {
                     for (j in 0..7)
                         desk[i].add(Ch())
                 }
-                for (row in (1..2) + (5..6)) {
-                    val color = if (row == 1) "white" else "black"
-//                    val color = if (row < 3) "black" else "white"
+                for (row in (0..2) + (5..7)) {
+//                    val color = if (row == 1) "white" else "black"
+                    val color = if (row < 3) "black" else "white"
                     for (column in 0..7)
                         if ((row + column) % 2 == 1) {
                             val imv = imageview {
@@ -126,7 +122,7 @@ class MainView : View("rus checkers") {
             var changeTurn = true
             if (kotlin.math.abs(selectedX - newX) >= 2) {
                 println("attack")
-                println("newx $newX newy $newY selX $selectedX selY $selectedY")
+                println("newX $newX newY $newY selX $selectedX selY $selectedY")
                 val listX = until(newX, selectedX)
                 val listY = until(newY, selectedY)
                 for (i in listX.indices)
@@ -188,34 +184,48 @@ class MainView : View("rus checkers") {
         return desk[x][y].possibleMoves.isNotEmpty()
     }
 
-    private fun canKingAttack(x: Int, y: Int): Boolean {
+    private fun canKingAttack(x: Int, y: Int, recurse: Boolean = false, avoidEnemy: Pair<Int, Int>? = null): Boolean {
         for (dx in listOf(-1, 1))
             for (dy in listOf(-1, 1)) {
                 var k = 1
-                var foundEnemy = false
+                var enemy: Pair<Int, Int>? = null
+                val moves = mutableListOf<Pair<Int, Int>>()
                 while (x + dx * k in 0..7 && y + dy * k in 0..7) {
                     val currentX = x + dx * k
                     val currentY = y + dy * k
-                    println("curX $currentX currentY $currentY")
                     val currentColor = desk[currentX][currentY].color
                     if (currentColor == turn)
                         break
-                    if (currentColor == turn.invert()) {
-                        if (foundEnemy)
+                    if (currentColor == turn.invert() && avoidEnemy != Pair(currentX, currentY)) {
+                        if (enemy != null)
                             break
                         if (currentX + dx in 0..7 && currentY + dy in 0..7)
                             if (desk[currentX + dx][currentY + dy].color == null) {
-                                desk[x][y].possibleMoves.add(Pair(currentX + dx, currentY + dy))
-                                foundEnemy = true
-                            } else {
+
+                                enemy = Pair(currentX, currentY)
+                                moves.add(Pair(currentX + dx, currentY + dy))
+                            } else
                                 break
-                            }
                     }
-                    if (currentColor == null && foundEnemy)
-                        desk[x][y].possibleMoves.add(Pair(currentX, currentY))
+                    if (currentColor == null && enemy != null)
+                        moves.add(Pair(currentX, currentY))
                     k += 1
                 }
+                if (recurse)
+                    if (moves.isNotEmpty())
+                        return true
+                var found = false
+
+                for ((xMove, yMove) in moves)
+                    if (canKingAttack(xMove, yMove, true, enemy)) {
+                        desk[x][y].possibleMoves.add(Pair(xMove, yMove))
+                        found = true
+                    }
+                if (!found)
+                    desk[x][y].possibleMoves.addAll(moves)
             }
+        if (recurse)
+            return false
         return desk[x][y].possibleMoves.isNotEmpty()
     }
 
@@ -242,9 +252,6 @@ class MainView : View("rus checkers") {
                     canKingMove(x, y)
                 else
                     canMove(x, y)
-//                if (desk[x][y].possibleMoves.isEmpty()) { ???
-
-//                }
             }
     }
 
@@ -274,7 +281,7 @@ class MainView : View("rus checkers") {
                 tiles[i][j].fill = if ((i + j) % 2 == 0) WHITE else color(80.0 / 255, 40.0 / 255, 30.0 / 255)
     }
 
-    private fun movesClear(){
+    private fun movesClear() {
         for (x in 0..7)
             for (y in 0..7)
                 desk[x][y].possibleMoves.clear()
