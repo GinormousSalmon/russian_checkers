@@ -22,6 +22,7 @@ class MainView : View("rus checkers") {
     private val initialWidth = 600.0
     private lateinit var lbl: Label
     private lateinit var restartButton: Button
+    private lateinit var surrenderButton: Button
     private var gridpane: GridPane
     private var turn = WHITE
 
@@ -41,6 +42,7 @@ class MainView : View("rus checkers") {
         currentStage?.widthProperty()?.onChange {
             lbl.font = Font(currentStage!!.width / fontSizeDivider)
             restartButton.font = Font(currentStage!!.width / 25)
+            surrenderButton.font = Font(currentStage!!.width / 25)
             currentStage?.maxHeight = currentStage!!.width + lbl.font.size * 1.5 + 40
             currentStage?.minHeight = currentStage!!.width + lbl.font.size * 1.5 + 40
         }
@@ -66,11 +68,18 @@ class MainView : View("rus checkers") {
                     lbl = label("White turn")
 //                    lbl.textFill = BLACK
                 }
-                right {
+                center {
                     paddingRightProperty.bind(root.widthProperty().divide(50))
                     restartButton = button {
                         text = "Restart"
                         action { restart() }
+                    }
+                }
+                right {
+//                    paddingRightProperty.bind(root.widthProperty().divide(50))
+                    surrenderButton = button {
+                        text = "Surrender"
+                        action { surrender() }
                     }
                 }
             }
@@ -174,6 +183,14 @@ class MainView : View("rus checkers") {
                     }
             }
         }
+    }
+
+    private fun surrender(){
+        lbl.text = (if (turn == BLACK) "White" else "Black") + " won"
+        deskClear()
+        for (column in desk)
+            for (ch in column)
+                ch.possibleMoves.clear()
     }
 
     private fun until(a: Int, b: Int): List<Int> {
