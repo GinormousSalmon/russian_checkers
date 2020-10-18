@@ -5,15 +5,15 @@ import javafx.geometry.VPos
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.image.Image
-import javafx.scene.image.ImageView
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.VBox
-import javafx.scene.paint.Color
 import javafx.scene.paint.Color.*
 import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Font
 import tornadofx.*
+import Checker
+import King
 
 
 class MainView : View("rus checkers") {
@@ -26,14 +26,7 @@ class MainView : View("rus checkers") {
     private var gridpane: GridPane
     private var turn = WHITE
 
-    class Ch(
-        var image: ImageView? = null,
-        var color: Color? = null,
-        val possibleMoves: MutableList<Pair<Int, Int>> = mutableListOf(),
-        var isKing: Boolean = false
-    )
-
-    private val desk = mutableListOf<MutableList<Ch>>()
+    private val desk = mutableListOf<MutableList<Checker?>>()
     private val tiles = mutableListOf<MutableList<Rectangle>>()
     private var selectedX = -1
     private var selectedY = -1
@@ -66,7 +59,6 @@ class MainView : View("rus checkers") {
                 left {
                     paddingLeftProperty.bind(root.widthProperty().divide(50))
                     lbl = label("White turn")
-//                    lbl.textFill = BLACK
                 }
                 center {
                     paddingRightProperty.bind(root.widthProperty().divide(50))
@@ -93,8 +85,9 @@ class MainView : View("rus checkers") {
             for (i in 0..7) {
                 desk.add(mutableListOf())
                 for (j in 0..7)
-                    desk[i].add(Ch())
+                    desk[i].add(null)
             }
+            Checker.desk = desk
             for (row in (1..2) + (5..6)) {
 //                for (row in (0..2) + (5..7)) {
                 val color = if (row == 1) "white" else "black"
@@ -115,19 +108,17 @@ class MainView : View("rus checkers") {
                                 click(properties["gridpane-column"] as Int, properties["gridpane-row"] as Int)
                             }
                         }
-                        desk[column][row].isKing = false
-                        desk[column][row].image = imv
-                        desk[column][row].color = if (color == "black") BLACK else WHITE
+                        desk[column][row] = Checker(imv, if (color == "black") BLACK else WHITE, isKing = false)
                     }
             }
         }
     }
 
     private fun click(column: Int, row: Int) {
-        if (desk[column][row].color == WHITE)
-            println("selected $column $row king: ${desk[column][row].isKing} WHITE")
+        if (desk[column][row]?.color == WHITE)
+            println("selected $column $row king: ${desk[column][row]?.isKing} WHITE ${desk[column][row]?.javaClass}")
         else
-            println("selected $column $row king: ${desk[column][row].isKing} BLACK")
+            println("selected $column $row king: ${desk[column][row]?.isKing} BLACK ${desk[column][row]?.javaClass}")
         selectedX = column
         selectedY = row
         deskClear()
@@ -138,21 +129,18 @@ class MainView : View("rus checkers") {
     private fun tileClick(color: Paint, newX: Int, newY: Int) {
         if (color == GREEN) {
             deskClear()
-            desk[selectedX][selectedY].image?.gridpaneConstraints { columnRowIndex(newX, newY) }
-            desk[newX][newY].image = desk[selectedX][selectedY].image
-            desk[newX][newY].isKing = desk[selectedX][selectedY].isKing
-            desk[newX][newY].color = turn
 
-            desk[selectedX][selectedY].color = null
-            desk[selectedX][selectedY].image = null
-            desk[selectedX][selectedY].isKing = false
-            desk[selectedX][selectedY].possibleMoves.clear()
+            desk[selectedX][selectedY]?.move(newX, newY)
+//            desk[selectedX][selectedY]?.image?.gridpaneConstraints { columnRowIndex(newX, newY) }
+            desk[newX][newY] = desk[selectedX][selectedY]
+            desk[selectedX][selectedY] = null
 
             if (newY == 0 && turn == WHITE || newY == 7 && turn == BLACK) {
-                desk[newX][newY].isKing = true
+                desk[newX][newY]?.isKing = true
+                desk[newX][newY] = King(desk[newX][newY])
                 Image("file:src/main/resources/$color.png")
                 val col = if (turn == WHITE) "white" else "black"
-                desk[newX][newY].image?.image = Image("file:src/main/resources/${col}_king.png")
+                desk[newX][newY]?.image?.image = Image("file:src/main/resources/${col}_king.png")
             }
 
             var changeTurn = true
@@ -162,13 +150,14 @@ class MainView : View("rus checkers") {
                 val listX = until(newX, selectedX)
                 val listY = until(newY, selectedY)
                 for (i in listX.indices)
-                    if (desk[listX[i]][listY[i]].color != null) {
+                    if (desk[listX[i]][listY[i]]?.color != null) {
                         val xDel = listX[i]
                         val yDel = listY[i]
-                        desk[xDel][yDel].color = null
-                        desk[xDel][yDel].image?.hide()
-                        desk[xDel][yDel].image = null
-                        desk[xDel][yDel].possibleMoves.clear()
+                        desk[xDel][yDel]?.image?.hide()
+                        desk[xDel][yDel] = null
+//                        desk[xDel][yDel]?.color = null
+//                        desk[xDel][yDel]?.image = null
+//                        desk[xDel][yDel]?.possibleMoves?.clear()
                         changeTurn = !calcPossibleAttacks(newX, newY)
                         break
                     }
@@ -185,12 +174,12 @@ class MainView : View("rus checkers") {
         }
     }
 
-    private fun surrender(){
+    private fun surrender() {
         lbl.text = (if (turn == BLACK) "White" else "Black") + " won"
         deskClear()
         for (column in desk)
             for (ch in column)
-                ch.possibleMoves.clear()
+                ch?.possibleMoves?.clear()
     }
 
     private fun until(a: Int, b: Int): List<Int> {
@@ -206,130 +195,35 @@ class MainView : View("rus checkers") {
     private fun calcPossibleAttacks(selectedX: Int = -1, selectedY: Int = -1): Boolean {
         movesClear()
         if (selectedX != -1) {
-            return canAttack(selectedX, selectedY)
+            return desk[selectedX][selectedY]?.canAttack() ?: false
+//            return canAttack(selectedX, selectedY)
         }
         var canAnyAttack = false
         for (x in 0..7)
             for (y in 0..7) {
-                if (desk[x][y].color == turn) {
-                    canAnyAttack = canAttack(x, y) || canAnyAttack
+                if (desk[x][y]?.color == turn) {
+                    canAnyAttack = (desk[x][y]?.canAttack() ?: false) || canAnyAttack
+//                    canAnyAttack = canAttack(x, y) || canAnyAttack
                 }
             }
         return canAnyAttack
-    }
-
-    private fun canAttack(x: Int, y: Int): Boolean {
-        if (desk[x][y].isKing) {
-            return canKingAttack(x, y)
-        } else {
-            for (i in listOf(-2, 2))
-                for (j in listOf(-2, 2))
-                    if (x + i in 0..7 && y + j in 0..7)
-                        if (desk[x + i][y + j].color == null && desk[x + i / 2][y + j / 2].color == desk[x][y].color?.invert())
-                            desk[x][y].possibleMoves.add(Pair(x + i, y + j))
-        }
-        return desk[x][y].possibleMoves.isNotEmpty()
-    }
-
-    private fun canKingAttack(x: Int, y: Int, recurse: Boolean = false, avoidEnemy: Pair<Int, Int>? = null): Boolean {
-        for (dx in listOf(-1, 1))
-            for (dy in listOf(-1, 1)) {
-                var k = 1
-                var enemy: Pair<Int, Int>? = null
-                val moves = mutableListOf<Pair<Int, Int>>()
-                while (x + dx * k in 0..7 && y + dy * k in 0..7) {
-                    val currentX = x + dx * k
-                    val currentY = y + dy * k
-                    val currentColor = desk[currentX][currentY].color
-                    if (currentColor == turn)
-                        break
-                    if (currentColor == turn.invert() && avoidEnemy != Pair(currentX, currentY)) {
-                        if (enemy != null)
-                            break
-                        if (currentX + dx in 0..7 && currentY + dy in 0..7)
-                            if (desk[currentX + dx][currentY + dy].color == null) {
-
-                                enemy = Pair(currentX, currentY)
-                                moves.add(Pair(currentX + dx, currentY + dy))
-                            } else
-                                break
-                    }
-                    if (currentColor == null && enemy != null)
-                        moves.add(Pair(currentX, currentY))
-                    k += 1
-                }
-                if (recurse)
-                    if (moves.isNotEmpty())
-                        return true
-                var found = false
-
-                for ((xMove, yMove) in moves)
-                    if (canKingAttack(xMove, yMove, true, enemy)) {
-                        desk[x][y].possibleMoves.add(Pair(xMove, yMove))
-                        found = true
-                    }
-                if (!found)
-                    desk[x][y].possibleMoves.addAll(moves)
-            }
-        if (recurse)
-            return false
-        return desk[x][y].possibleMoves.isNotEmpty()
     }
 
     private fun calcPossibleMoves(): Boolean {
         var canAnyMove = false
         for (x in 0..7)
             for (y in 0..7) {
-                if (desk[x][y].color == turn)
-                    canAnyMove = (if (desk[x][y].isKing) canKingMove(x, y) else canMove(x, y)) || canAnyMove
-            }
-        return canAnyMove
-    }
-
-    private fun canMove(x: Int, y: Int): Boolean {
-        var canAnyMove = false
-        val addition = if (desk[x][y].color == WHITE) -1 else 1
-        if (y + addition in 0..7) {
-            if (x <= 6)
-                if (desk[x + 1][y + addition].color == null) {
-                    desk[x][y].possibleMoves.add(Pair(x + 1, y + addition))
-                    canAnyMove = true
-                }
-            if (x >= 1)
-                if (desk[x - 1][y + addition].color == null) {
-                    desk[x][y].possibleMoves.add(Pair(x - 1, y + addition))
-                    canAnyMove = true
-                }
-        }
-        return canAnyMove
-    }
-
-    private fun canKingMove(x: Int, y: Int): Boolean {
-        var canAnyMove = false
-        for (dx in listOf(-1, 1))
-            for (dy in listOf(-1, 1)) {
-                var k = 1
-                while (x + dx * k in 0..7 && y + dy * k in 0..7) {
-                    val currentX = x + dx * k
-                    val currentY = y + dy * k
-                    if (desk[currentX][currentY].color == null) {
-                        desk[x][y].possibleMoves.add(Pair(currentX, currentY))
-                        canAnyMove = true
-                    } else {
-                        break
-                    }
-                    k += 1
-                }
+                if (desk[x][y]?.color == turn)
+                    canAnyMove = (desk[x][y]?.canMove() ?: false) || canAnyMove
             }
         return canAnyMove
     }
 
     private fun drawPossibleMoves(x: Int, y: Int) {
-        if (desk[x][y].color == turn)
-            for (move in desk[x][y].possibleMoves)
+        if (desk[x][y]?.color == turn)
+            for (move in desk[x][y]?.possibleMoves!!)
                 tiles[move.first][move.second].fill = GREEN
     }
-
 
     private fun deskClear() {
         for (i in 0..7)
@@ -340,7 +234,7 @@ class MainView : View("rus checkers") {
     private fun movesClear() {
         for (x in 0..7)
             for (y in 0..7)
-                desk[x][y].possibleMoves.clear()
+                desk[x][y]?.possibleMoves?.clear()
     }
 
     private fun restart() {
@@ -348,8 +242,8 @@ class MainView : View("rus checkers") {
         lbl.text = "White turn"
         turn = WHITE
         for (a in desk)
-            for(b in a)
-                b.image?.hide()
+            for (b in a)
+                b?.image?.hide()
         desk.clear()
         spawn(gridpane)
         calcPossibleMoves()
