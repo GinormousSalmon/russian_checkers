@@ -1,37 +1,18 @@
-import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.scene.image.Image
-import javafx.scene.layout.GridPane
 import javafx.scene.paint.Color
 import javafx.scene.paint.Color.WHITE
-import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
-import tornadofx.gridpaneConstraints
 import tornadofx.hide
-import tornadofx.onLeftClick
-import tornadofx.rectangle
 
-class Desk(gp: GridPane, widthProp: ReadOnlyDoubleProperty, click:(color: Paint, newX: Int, newY: Int)->Unit) {
+class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
     private val desk = mutableListOf<MutableList<Checker?>>()
-    private val tiles = mutableListOf<MutableList<Rectangle>>()
 
     init {
+        desk.clear()
         for (i in 0..7) {
             desk.add(mutableListOf())
             for (j in 0..7)
                 desk[i].add(null)
-        }
-        with(gp) {
-            for (i in 0..7) {
-                tiles.add(mutableListOf())
-                for (j in 0..7)
-                    tiles[i].add(rectangle {
-                        fill = if ((i + j) % 2 == 0) WHITE else Color.color(80.0 / 255, 40.0 / 255, 30.0 / 255)
-                        widthProperty().bind(widthProp.divide(8))
-                        heightProperty().bind(widthProp.divide(8))
-                        gridpaneConstraints { columnRowIndex(i, j) }
-                        onLeftClick { click(this.fill, i, j) }
-                    })
-            }
         }
     }
 
@@ -77,5 +58,11 @@ class Desk(gp: GridPane, widthProp: ReadOnlyDoubleProperty, click:(color: Paint,
         for (i in 0..7)
             for (j in 0..7)
                 tiles[i][j].fill = if ((i + j) % 2 == 0) WHITE else Color.color(80.0 / 255, 40.0 / 255, 30.0 / 255)
+    }
+
+    fun hideAll(){
+        for (x in 0..7)
+            for (y in 0..7)
+                desk[x][y]?.image?.hide()
     }
 }

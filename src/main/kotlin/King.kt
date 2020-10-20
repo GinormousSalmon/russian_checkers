@@ -10,8 +10,9 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
                         this.possibleMoves.add(Triple(xMove, yMove, enemy))
                         found = true
                     }
-                if (!found)
+                if (!found) {
                     this.possibleMoves.addAll(moves)
+                }
             }
         return this.possibleMoves.isNotEmpty()
     }
@@ -19,8 +20,8 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
     private fun checkSecondAttack(x: Int, y: Int, avoidEnemy: Pair<Int, Int>?): Boolean {
         for (dx in listOf(-1, 1))
             for (dy in listOf(-1, 1))
-                    if (getMoves(dx, dy, x, y, avoidEnemy).first.isNotEmpty())
-                        return true
+                if (getMoves(dx, dy, x, y, avoidEnemy).first.isNotEmpty())
+                    return true
         return false
     }
 
@@ -56,7 +57,8 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
                     }
             }
             if (currentColor == null && enemy != null)
-                moves.add(Triple(currentX, currentY, enemy))
+                if (!moves.contains(Triple(currentX, currentY, enemy)))
+                    moves.add(Triple(currentX, currentY, enemy))
             k += 1
         }
         return Pair(moves, enemy)

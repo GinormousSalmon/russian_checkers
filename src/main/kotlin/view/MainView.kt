@@ -15,6 +15,7 @@ import Checker
 import Movement
 import Desk
 import javafx.scene.paint.Color
+import javafx.scene.shape.Rectangle
 
 
 class MainView : View("rus checkers") {
@@ -26,15 +27,17 @@ class MainView : View("rus checkers") {
     private val fontSizeMultiplier = 1.5
     private var gridpane: GridPane
     private var movement: Movement
+    private var desk: Desk
     private lateinit var lbl: Label
-    private lateinit var desk: Desk
     private lateinit var restartButton: Button
     private lateinit var surrenderButton: Button
+    private val tiles = mutableListOf<MutableList<Rectangle>>()
 
     private var selectedX = -1
     private var selectedY = -1
 
     init {
+        desk = Desk(tiles)
         currentStage?.widthProperty()?.onChange {
             lbl.font = Font(currentStage!!.width / fontSizeDivider)
             restartButton.font = Font(currentStage!!.width / buttonFontSizeDivider)
@@ -44,7 +47,17 @@ class MainView : View("rus checkers") {
         }
         with(root) {
             gridpane = gridpane {
-                desk = Desk(this, root.widthProperty(), ::tileClick)
+                for (i in 0..7) {
+                    tiles.add(mutableListOf())
+                    for (j in 0..7)
+                        tiles[i].add(rectangle {
+                            fill = if ((i + j) % 2 == 0) WHITE else color(80.0 / 255, 40.0 / 255, 30.0 / 255)
+                            widthProperty().bind(root.widthProperty().divide(8))
+                            heightProperty().bind(root.widthProperty().divide(8))
+                            gridpaneConstraints { columnRowIndex(i, j) }
+                            onLeftClick { tileClick(fill, i, j) }
+                        })
+                }
                 spawn(this)
             }
             borderpane {
@@ -77,9 +90,9 @@ class MainView : View("rus checkers") {
         with(gp) {
             Checker.setDesk(desk)
 //            for (row in (1..2) + (5..6)) {
-                for (row in (0..2) + (5..7)) {
+            for (row in (0..2) + (5..7)) {
 //                val color = if (row == 1) "white" else "black"
-                    val color = if (row < 3) "black" else "white"
+                val color = if (row < 3) "black" else "white"
                 for (column in 0..7)
                     if ((row + column) % 2 == 1) {
                         val imv = imageview {
@@ -143,13 +156,15 @@ class MainView : View("rus checkers") {
 
     private fun restart() {
         setText(WHITE, "turn")
-        desk = Desk(gridpane, root.widthProperty(), ::tileClick)
+        desk.tilesClear()
+        desk.hideAll()
+        desk = Desk(tiles)
         spawn(gridpane)
         movement = Movement(desk)
         movement.calcPossibleMoves()
     }
 
-    private fun setText(turn: Color, add:String, color: Color = BLACK){
+    private fun setText(turn: Color, add: String, color: Color = BLACK) {
         lbl.text = (if (turn == WHITE) "White" else "Black") + " " + add
         lbl.textFill = color
     }
