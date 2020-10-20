@@ -144,11 +144,21 @@ class MainView : View("rus checkers") {
                         setText(movement.turn.invert(), "won", GREEN)
             }
         }
+        if (desk.draw()) {
+            lbl.text = "Draw"
+            lbl.textFill = RED
+            desk.tilesClear()
+            allMovesClear()
+        }
     }
 
     private fun surrender() {
         setText(movement.turn.invert(), "won", GREEN)
         desk.tilesClear()
+        allMovesClear()
+    }
+
+    private fun allMovesClear(){
         for (x in 0..7)
             for (y in 0..7)
                 desk.get(x, y)?.possibleMoves?.clear()

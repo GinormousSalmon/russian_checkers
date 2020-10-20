@@ -6,6 +6,7 @@ import tornadofx.hide
 
 class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
     private val desk = mutableListOf<MutableList<Checker?>>()
+    private var fifteenTurnsCount = 0
 
     init {
         desk.clear()
@@ -33,6 +34,10 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
             remove(enemy)
             return true
         }
+        if (desk[xTo][yTo] is King)
+            fifteenTurnsCount += 1
+        else
+            fifteenTurnsCount = 0
         return false
     }
 
@@ -43,7 +48,7 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
         desk[x][y]?.image?.image = Image("file:src/main/resources/${col}_king.png")
     }
 
-    private fun remove(xy:Pair<Int,Int>) {
+    private fun remove(xy: Pair<Int, Int>) {
         val (x, y) = xy
         desk[x][y]?.image?.hide()
         desk[x][y] = null
@@ -60,9 +65,13 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
                 tiles[i][j].fill = if ((i + j) % 2 == 0) WHITE else Color.color(80.0 / 255, 40.0 / 255, 30.0 / 255)
     }
 
-    fun hideAll(){
+    fun hideAll() {
         for (x in 0..7)
             for (y in 0..7)
                 desk[x][y]?.image?.hide()
+    }
+
+    fun draw(): Boolean {
+        return fifteenTurnsCount == 15
     }
 }
