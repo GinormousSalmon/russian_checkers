@@ -89,10 +89,10 @@ class MainView : View("rus checkers") {
     private fun spawn(gp: GridPane) {
         with(gp) {
             Checker.setDesk(desk)
-            for (row in (1..2) + (5..6)) {
-//            for (row in (0..2) + (5..7)) {
-                val color = if (row == 1) "white" else "black"
-//                val color = if (row < 3) "black" else "white"
+//            for (row in (1..2) + (5..6)) {
+            for (row in (0..2) + (5..7)) {
+//                val color = if (row == 1) "white" else "black"
+                val color = if (row < 3) "black" else "white"
                 for (column in 0..7)
                     if ((row + column) % 2 == 1) {
                         val imv = imageview {

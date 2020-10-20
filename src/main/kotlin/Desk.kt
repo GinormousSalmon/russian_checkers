@@ -34,11 +34,11 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
         desk[xFrom][yFrom] = null
         val enemy = desk[xTo][yTo]?.possibleMoves?.filter { it.first == xTo && it.second == yTo }?.get(0)?.third
         if (enemy == null || desk[enemy.first][enemy.second] !is King) {
-            println("white $whiteKingsCount black $blackKingsCount count $fifteenTurnsWithoutAttackCount")
             if (whiteKingsCount == 1 && blackKingsCount >= 3 || blackKingsCount == 1 && whiteKingsCount >= 3)
                 fifteenTurnsWithoutAttackCount += 1
             else
                 fifteenTurnsWithoutAttackCount = 0
+            println("white $whiteKingsCount black $blackKingsCount count $fifteenTurnsWithoutAttackCount")
         }
         if (enemy != null) {
             remove(enemy)
@@ -62,6 +62,8 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
             whiteKingsCount += 1
         else
             blackKingsCount += 1
+        if (!(whiteKingsCount == 1 && blackKingsCount >= 3 || blackKingsCount == 1 && whiteKingsCount >= 3))
+            fifteenTurnsWithoutAttackCount = 0
     }
 
     private fun remove(xy: Pair<Int, Int>) {
