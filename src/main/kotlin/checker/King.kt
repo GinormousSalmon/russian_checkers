@@ -1,3 +1,5 @@
+package checker
+
 class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
 
     override fun canAttack(): Boolean {

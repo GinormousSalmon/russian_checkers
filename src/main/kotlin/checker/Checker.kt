@@ -1,3 +1,6 @@
+package checker
+
+import Desk
 import javafx.scene.image.ImageView
 import javafx.scene.paint.Color
 import tornadofx.gridpaneConstraints

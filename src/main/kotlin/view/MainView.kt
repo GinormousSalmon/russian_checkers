@@ -11,7 +11,7 @@ import javafx.scene.paint.Color.*
 import javafx.scene.paint.Paint
 import javafx.scene.text.Font
 import tornadofx.*
-import Checker
+import checker.Checker
 import Movement
 import Desk
 import javafx.scene.paint.Color
