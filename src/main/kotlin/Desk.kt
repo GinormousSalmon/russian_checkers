@@ -1,8 +1,7 @@
 import checker.Checker
 import checker.King
 import javafx.scene.image.Image
-import javafx.scene.paint.Color
-import javafx.scene.paint.Color.WHITE
+import javafx.scene.paint.Color.*
 import javafx.scene.shape.Rectangle
 import tornadofx.hide
 
@@ -83,13 +82,13 @@ class Desk(private val tiles: MutableList<MutableList<Rectangle>>) {
 
     fun drawPossibleMoves(x: Int, y: Int) {
         for (move in desk[x][y]?.possibleMoves!!)
-            tiles[move.first][move.second].fill = Color.GREEN
+            tiles[move.first][move.second].fill = GREEN
     }
 
     fun tilesClear() {
         for (i in 0..7)
             for (j in 0..7)
-                tiles[i][j].fill = if ((i + j) % 2 == 0) WHITE else Color.color(80.0 / 255, 40.0 / 255, 30.0 / 255)
+                tiles[i][j].fill = if ((i + j) % 2 == 0) WHITE else color(80.0 / 255, 40.0 / 255, 30.0 / 255)
     }
 
     fun hideAll() {

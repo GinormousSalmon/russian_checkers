@@ -31,7 +31,7 @@ class Movement(private val desk: Desk) {
         return canAnyMove
     }
 
-    private fun movesClear() {
+    fun movesClear() {
         for (x in 0..7)
             for (y in 0..7)
                 desk.get(x, y)?.possibleMoves?.clear()

@@ -12,9 +12,8 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
                         this.possibleMoves.add(Triple(xMove, yMove, enemy))
                         found = true
                     }
-                if (!found) {
+                if (!found)
                     this.possibleMoves.addAll(moves)
-                }
             }
         return this.possibleMoves.isNotEmpty()
     }
@@ -34,8 +33,7 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
         yStart: Int? = null,
         avoidEnemy: Pair<Int, Int>? = null
     ): Pair<List<Triple<Int, Int, Pair<Int, Int>>>, Pair<Int, Int>?> {
-        val (x, y) = if (xStart == null || yStart == null)
-            this.image.properties?.get("gridpane-column") as Int to this.image.properties?.get("gridpane-row") as Int
+        val (x, y) = if (xStart == null || yStart == null) this.x to this.y
         else xStart to yStart
         val turn = this.color
         var k = 1
@@ -51,7 +49,7 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
                 if (avoidEnemy == Pair(currentX, currentY) || enemy != null)
                     break
                 if (currentX + dx in 0..7 && currentY + dy in 0..7)
-                    if (desk.get(currentX + dx, currentY + dy)?.color == null) {
+                    if (desk.get(currentX + dx, currentY + dy) == null) {
                         enemy = Pair(currentX, currentY)
                         moves.add(Triple(currentX + dx, currentY + dy, enemy))
                     } else {
@@ -67,16 +65,14 @@ class King(ch: Checker) : Checker(ch.image, ch.color, ch.possibleMoves) {
     }
 
     override fun canMove(): Boolean {
-        val x = this.image.properties?.get("gridpane-column") as Int
-        val y = this.image.properties?.get("gridpane-row") as Int
         var canAnyMove = false
         for (dx in listOf(-1, 1))
             for (dy in listOf(-1, 1)) {
                 var k = 1
-                while (x + dx * k in 0..7 && y + dy * k in 0..7) {
-                    val currentX = x + dx * k
-                    val currentY = y + dy * k
-                    if (desk.get(currentX, currentY)?.color == null) {
+                while (this.x + dx * k in 0..7 && this.y + dy * k in 0..7) {
+                    val currentX = this.x + dx * k
+                    val currentY = this.y + dy * k
+                    if (desk.get(currentX, currentY) == null) {
                         this.possibleMoves.add(Triple(currentX, currentY, null))
                         canAnyMove = true
                     } else {

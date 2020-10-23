@@ -19,8 +19,8 @@ open class Checker(
         }
     }
 
-    private var x: Int = 0
-    private var y: Int = 0
+    var x: Int = 0
+    var y: Int = 0
 
     init {
         x = this.image.properties?.get("gridpane-column") as Int
@@ -47,21 +47,16 @@ open class Checker(
     }
 
     open fun canMove(): Boolean {
-        var canAnyMove = false
         val addition = if (this.color == Color.WHITE) -1 else 1
         if (y + addition in 0..7) {
             if (x <= 6)
-                if (desk.get(x + 1, y + addition)?.color == null) {
+                if (desk.get(x + 1, y + addition)?.color == null)
                     this.possibleMoves.add(Triple(x + 1, y + addition, null))
-                    canAnyMove = true
-                }
             if (x >= 1)
-                if (desk.get(x - 1, y + addition)?.color == null) {
+                if (desk.get(x - 1, y + addition)?.color == null)
                     this.possibleMoves.add(Triple(x - 1, y + addition, null))
-                    canAnyMove = true
-                }
         }
-        return canAnyMove
+        return this.possibleMoves.isNotEmpty()
     }
 
     override fun toString(): String {

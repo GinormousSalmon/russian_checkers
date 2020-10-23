@@ -1,5 +1,6 @@
 package view
 
+import tornadofx.*
 import javafx.geometry.HPos
 import javafx.geometry.VPos
 import javafx.scene.control.Button
@@ -10,21 +11,22 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color.*
 import javafx.scene.paint.Paint
 import javafx.scene.text.Font
-import tornadofx.*
+import javafx.scene.paint.Color
+import javafx.scene.shape.Rectangle
 import checker.Checker
 import Movement
 import Desk
-import javafx.scene.paint.Color
-import javafx.scene.shape.Rectangle
 
 
-class MainView : View("rus checkers") {
+class MainView : View("russian checkers") {
     override val root = VBox()
     private val fontSizeDivider = 15
     private val buttonFontSizeDivider = 25
+    private val checkerSizeDivider = 10
     private val initialWidth = 600.0
     private val paddingDivider = 50
     private val fontSizeMultiplier = 1.5
+    private val blackTileColor = color(80.0 / 255, 40.0 / 255, 30.0 / 255)
     private var gridpane: GridPane
     private var movement: Movement
     private var desk: Desk
@@ -51,7 +53,7 @@ class MainView : View("rus checkers") {
                     tiles.add(mutableListOf())
                     for (j in 0..7)
                         tiles[i].add(rectangle {
-                            fill = if ((i + j) % 2 == 0) WHITE else color(80.0 / 255, 40.0 / 255, 30.0 / 255)
+                            fill = if ((i + j) % 2 == 0) WHITE else blackTileColor
                             widthProperty().bind(root.widthProperty().divide(8))
                             heightProperty().bind(root.widthProperty().divide(8))
                             gridpaneConstraints { columnRowIndex(i, j) }
@@ -89,23 +91,20 @@ class MainView : View("rus checkers") {
     private fun spawn(gp: GridPane) {
         with(gp) {
             Checker.setDesk(desk)
-//            for (row in (1..2) + (5..6)) {
             for (row in (0..2) + (5..7)) {
-//                val color = if (row == 1) "white" else "black"
                 val color = if (row < 3) "black" else "white"
                 for (column in 0..7)
                     if ((row + column) % 2 == 1) {
                         val imv = imageview {
                             image = Image("file:src/main/resources/$color.png")
-                            fitHeightProperty().bind(root.widthProperty().divide(10))
-                            fitWidthProperty().bind(root.widthProperty().divide(10))
+                            fitHeightProperty().bind(root.widthProperty().divide(checkerSizeDivider))
+                            fitWidthProperty().bind(root.widthProperty().divide(checkerSizeDivider))
                             gridpaneConstraints {
                                 columnRowIndex(column, row)
                                 hAlignment = HPos.CENTER
                                 vAlignment = VPos.CENTER
                             }
                             onLeftClick {
-                                println(properties)
                                 checkerClick(properties["gridpane-column"] as Int, properties["gridpane-row"] as Int)
                             }
                         }
@@ -116,10 +115,8 @@ class MainView : View("rus checkers") {
     }
 
     private fun checkerClick(column: Int, row: Int) {
-        if (desk.get(column, row)?.color == WHITE)
-            println("selected $column $row WHITE ${desk.get(column, row)?.javaClass}")
-        else
-            println("selected $column $row BLACK ${desk.get(column, row)?.javaClass}")
+        val col = if (desk.get(column, row)?.color == WHITE) "WHITE" else "BLACK"
+        println("selected $column $row ${desk.get(column, row)?.javaClass} " + col)
         selectedX = column
         selectedY = row
         desk.tilesClear()
@@ -148,20 +145,14 @@ class MainView : View("rus checkers") {
             lbl.text = "Draw"
             lbl.textFill = RED
             desk.tilesClear()
-            allMovesClear()
+            movement.movesClear()
         }
     }
 
     private fun surrender() {
         setText(movement.turn.invert(), "won", GREEN)
         desk.tilesClear()
-        allMovesClear()
-    }
-
-    private fun allMovesClear(){
-        for (x in 0..7)
-            for (y in 0..7)
-                desk.get(x, y)?.possibleMoves?.clear()
+        movement.movesClear()
     }
 
     private fun restart() {
